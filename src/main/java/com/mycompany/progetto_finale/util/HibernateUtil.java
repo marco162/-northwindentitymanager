@@ -1,50 +1,53 @@
-package com.mycompany.progetto_finale.util;
+package com.mycompany.progetto_finale;
 
-import com.mycompany.progetto_finale.model.Category;
 import java.util.Properties;
+
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.service.ServiceRegistry;
 
-public final class HibernateUtil {
+public class HibernateUtil {
+	private static SessionFactory sessionFactory;
 
-    private static SessionFactory sessionFactory;
-    private static String databasePath = "src/main/webapp/northwind.db";
+	private static String filePath = "northwind.db";
+	
+	public static void SetFilePath(String path) {
+		filePath = path;
+	}
+	
+	public static SessionFactory getSessionFactory() {
+		if (sessionFactory == null) {
+			try {
+				Configuration configuration = new Configuration();
 
-    private HibernateUtil() {
-    }
+				// Hibernate settings equivalent to hibernate.cfg.xml's properties
+				Properties settings = new Properties();
+				settings.put(Environment.JAKARTA_JDBC_DRIVER, "org.sqlite.JDBC");
+				settings.put(Environment.JAKARTA_JDBC_URL, "jdbc:sqlite:" + filePath);
 
-    public static synchronized void setDatabasePath(String path) {
-        databasePath = path;
-        if (sessionFactory != null) {
-            sessionFactory.close();
-            sessionFactory = null;
-        }
-    }
+				settings.put(Environment.DIALECT, "org.hibernate.community.dialect.SQLiteDialect");
 
-    public static synchronized SessionFactory getSessionFactory() {
-        if (sessionFactory == null) {
-            Configuration configuration = new Configuration();
-            Properties settings = new Properties();
-            settings.put(Environment.JAKARTA_JDBC_DRIVER, "org.sqlite.JDBC");
-            settings.put(Environment.JAKARTA_JDBC_URL, "jdbc:sqlite:" + databasePath);
-            settings.put(Environment.DIALECT, "org.hibernate.community.dialect.SQLiteDialect");
-            settings.put(Environment.SHOW_SQL, "false");
-            settings.put(Environment.FORMAT_SQL, "true");
-            settings.put(Environment.HBM2DDL_AUTO, "none");
-            settings.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
+				settings.put(Environment.SHOW_SQL, "true");
 
-            configuration.setProperties(settings);
-            configuration.addAnnotatedClass(Category.class);
+				settings.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
 
-            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
-                    .applySettings(configuration.getProperties())
-                    .build();
-            sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-        }
+				settings.put(Environment.HBM2DDL_AUTO, "none");
 
-        return sessionFactory;
-    }
+				configuration.setProperties(settings);
+				configuration.addAnnotatedClass(Catalogo.class);
+
+				ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
+						.applySettings(configuration.getProperties()).build();
+				System.out.println("Hibernate Java Config serviceRegistry created");
+				sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+				return sessionFactory;
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return sessionFactory;
+	}
 }
